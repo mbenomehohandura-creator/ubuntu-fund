@@ -141,3 +141,19 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Hardhat generated files
+artifacts/
+cache/
+typechain-types/
+
+# Local secrets and environment settings
+.env
+.env.*
+!.env.example
+
+# Local AI assistant guidance
+.agents/
+.claude/
+AGENTS.md
+CLAUDE.md
