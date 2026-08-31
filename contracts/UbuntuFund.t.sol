@@ -15,4 +15,20 @@ contract UbuntuFundTest is Test {
         function test_DeployerBecomesAdministrator() public view {
         assertEq(fund.administrator(), address(this));
     }
+       function test_AdministratorCanSetInputter() public {
+        address inputter = address(0xBEEF);
+
+        fund.setInputter(inputter, true);
+
+        assertTrue(fund.inputters(inputter));
+    } 
+        function test_NonAdministratorCannotSetInputter() public {
+        address outsider = address(0xCAFE);
+        address inputter = address(0xBEEF);
+
+        vm.prank(outsider);
+        vm.expectRevert(UbuntuFund.AdministratorOnly.selector);
+
+        fund.setInputter(inputter, true);
+    }
 }
