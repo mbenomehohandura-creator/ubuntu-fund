@@ -22,19 +22,32 @@ struct Member {
     mapping(address => bool) public approvers;
     mapping(address => Member) public members;
     mapping(MemberCategory => uint256) public annualFees;
+    mapping(uint256 => mapping(address => uint256)) public membershipPaid;
         error AdministratorOnly();
+        error InputterOnly();
+        error MemberNotRegistered();
+        error InvalidAmount();
             event InputterUpdated(address indexed account, bool allowed);
             event ApproverUpdated(address indexed account, bool allowed);
             event MemberRegistered(
     address indexed account,
     MemberCategory category
 );
+    event MembershipPaymentRecorded(
+    address indexed member,
+    uint256 indexed financialYear,
+    uint256 amountCents,
+    address indexed inputter
+);
 
     modifier onlyAdministrator() {
         if (msg.sender != administrator) revert AdministratorOnly();
         _;
     }
-
+    modifier onlyInputter() {
+    if (!inputters[msg.sender]) revert InputterOnly();
+    _;
+}
     constructor() {
         administrator = msg.sender;
         annualFees[MemberCategory.StudentActive] = 30_000;
@@ -69,5 +82,22 @@ function registerMember(
     });
 
     emit MemberRegistered(account, category);
+}
+function recordMembershipPayment(
+    address member,
+    uint256 financialYear,
+    uint256 amountCents
+) external onlyInputter {
+    if (!members[member].registered) revert MemberNotRegistered();
+    if (amountCents == 0) revert InvalidAmount();
+
+    membershipPaid[financialYear][member] += amountCents;
+
+    emit MembershipPaymentRecorded(
+        member,
+        financialYear,
+        amountCents,
+        msg.sender
+    );
 }
 }

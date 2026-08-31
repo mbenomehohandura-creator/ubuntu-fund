@@ -112,4 +112,60 @@ function test_AnnualFeesMatchRequirements() public view {
         25_000
     );
 }
+function test_InputterCanRecordTwoMembershipInstalments() public {
+    address inputter = address(0xBEEF);
+    address member = address(0x1234);
+
+    fund.setInputter(inputter, true);
+    fund.registerMember(
+        member,
+        UbuntuFund.MemberCategory.StudentActive
+    );
+
+    vm.startPrank(inputter);
+    fund.recordMembershipPayment(member, 2026, 15_000);
+    fund.recordMembershipPayment(member, 2026, 15_000);
+    vm.stopPrank();
+
+    assertEq(fund.membershipPaid(2026, member), 30_000);
+}
+function test_NonInputterCannotRecordMembershipPayment() public {
+    address outsider = address(0xCAFE);
+    address member = address(0x1234);
+
+    vm.prank(outsider);
+    vm.expectRevert(UbuntuFund.InputterOnly.selector);
+
+    fund.recordMembershipPayment(member, 2026, 15_000);
+}
+function test_InputterCannotRecordPaymentForUnknownMember() public {
+    address inputter = address(0xBEEF);
+    address unknownMember = address(0x1234);
+
+    fund.setInputter(inputter, true);
+
+    vm.prank(inputter);
+    vm.expectRevert(UbuntuFund.MemberNotRegistered.selector);
+
+    fund.recordMembershipPayment(
+        unknownMember,
+        2026,
+        15_000
+    );
+}
+function test_InputterCannotRecordZeroPayment() public {
+    address inputter = address(0xBEEF);
+    address member = address(0x1234);
+
+    fund.setInputter(inputter, true);
+    fund.registerMember(
+        member,
+        UbuntuFund.MemberCategory.StudentActive
+    );
+
+    vm.prank(inputter);
+    vm.expectRevert(UbuntuFund.InvalidAmount.selector);
+
+    fund.recordMembershipPayment(member, 2026, 0);
+}
 }
