@@ -31,4 +31,20 @@ contract UbuntuFundTest is Test {
 
         fund.setInputter(inputter, true);
     }
+    function test_AdministratorCanSetApprover() public {
+    address approver = address(0xABCD);
+
+    fund.setApprover(approver, true);
+
+    assertTrue(fund.approvers(approver));
+}
+function test_NonAdministratorCannotSetApprover() public {
+    address outsider = address(0xCAFE);
+    address approver = address(0xABCD);
+
+    vm.prank(outsider);
+    vm.expectRevert(UbuntuFund.AdministratorOnly.selector);
+
+    fund.setApprover(approver, true);
+}
 }
