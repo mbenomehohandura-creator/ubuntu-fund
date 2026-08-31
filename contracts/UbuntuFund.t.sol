@@ -78,4 +78,38 @@ function test_NonAdministratorCannotRegisterMember() public {
         UbuntuFund.MemberCategory.StudentActive
     );
 }
+function test_AnnualFeesMatchRequirements() public view {
+    assertEq(
+        fund.annualFees(UbuntuFund.MemberCategory.StudentActive),
+        30_000
+    );
+    assertEq(
+        fund.annualFees(UbuntuFund.MemberCategory.StudentCasual),
+        15_000
+    );
+    assertEq(
+        fund.annualFees(UbuntuFund.MemberCategory.JuniorUnder16),
+        12_000
+    );
+    assertEq(
+        fund.annualFees(
+            UbuntuFund.MemberCategory.AlumniWorkingAdultActive
+        ),
+        50_000
+    );
+    assertEq(
+        fund.annualFees(
+            UbuntuFund.MemberCategory.AlumniWorkingAdultCasual
+        ),
+        35_000
+    );
+    assertEq(
+        fund.annualFees(UbuntuFund.MemberCategory.ExecutiveNonPlaying),
+        20_000
+    );
+    assertEq(
+        fund.annualFees(UbuntuFund.MemberCategory.ExecutiveActive),
+        25_000
+    );
+}
 }

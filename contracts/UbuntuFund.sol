@@ -21,6 +21,7 @@ struct Member {
     mapping(address => bool) public inputters;
     mapping(address => bool) public approvers;
     mapping(address => Member) public members;
+    mapping(MemberCategory => uint256) public annualFees;
         error AdministratorOnly();
             event InputterUpdated(address indexed account, bool allowed);
             event ApproverUpdated(address indexed account, bool allowed);
@@ -36,6 +37,13 @@ struct Member {
 
     constructor() {
         administrator = msg.sender;
+        annualFees[MemberCategory.StudentActive] = 30_000;
+annualFees[MemberCategory.StudentCasual] = 15_000;
+annualFees[MemberCategory.JuniorUnder16] = 12_000;
+annualFees[MemberCategory.AlumniWorkingAdultActive] = 50_000;
+annualFees[MemberCategory.AlumniWorkingAdultCasual] = 35_000;
+annualFees[MemberCategory.ExecutiveNonPlaying] = 20_000;
+annualFees[MemberCategory.ExecutiveActive] = 25_000;
     }
         function setInputter(
         address account,
