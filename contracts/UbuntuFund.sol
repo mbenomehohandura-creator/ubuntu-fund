@@ -3,12 +3,31 @@ pragma solidity ^0.8.34;
 
 
 contract UbuntuFund {
+    enum MemberCategory {
+    StudentActive,
+    StudentCasual,
+    JuniorUnder16,
+    AlumniWorkingAdultActive,
+    AlumniWorkingAdultCasual,
+    ExecutiveNonPlaying,
+    ExecutiveActive
+}
+
+struct Member {
+    MemberCategory category;
+    bool registered;
+}
     address public immutable administrator;
     mapping(address => bool) public inputters;
     mapping(address => bool) public approvers;
+    mapping(address => Member) public members;
         error AdministratorOnly();
             event InputterUpdated(address indexed account, bool allowed);
             event ApproverUpdated(address indexed account, bool allowed);
+            event MemberRegistered(
+    address indexed account,
+    MemberCategory category
+);
 
     modifier onlyAdministrator() {
         if (msg.sender != administrator) revert AdministratorOnly();
@@ -31,5 +50,16 @@ contract UbuntuFund {
 ) external onlyAdministrator {
     approvers[account] = allowed;
     emit ApproverUpdated(account, allowed);
+}
+function registerMember(
+    address account,
+    MemberCategory category
+) external onlyAdministrator {
+    members[account] = Member({
+        category: category,
+        registered: true
+    });
+
+    emit MemberRegistered(account, category);
 }
 }

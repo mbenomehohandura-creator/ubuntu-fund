@@ -47,4 +47,35 @@ function test_NonAdministratorCannotSetApprover() public {
 
     fund.setApprover(approver, true);
 }
+function test_AdministratorCanRegisterMember() public {
+    address member = address(0x1234);
+
+    fund.registerMember(
+        member,
+        UbuntuFund.MemberCategory.StudentActive
+    );
+
+    (
+        UbuntuFund.MemberCategory category,
+        bool registered
+    ) = fund.members(member);
+
+    assertEq(
+        uint256(category),
+        uint256(UbuntuFund.MemberCategory.StudentActive)
+    );
+    assertTrue(registered);
+}
+function test_NonAdministratorCannotRegisterMember() public {
+    address outsider = address(0xCAFE);
+    address member = address(0x1234);
+
+    vm.prank(outsider);
+    vm.expectRevert(UbuntuFund.AdministratorOnly.selector);
+
+    fund.registerMember(
+        member,
+        UbuntuFund.MemberCategory.StudentActive
+    );
+}
 }
