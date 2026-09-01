@@ -32,6 +32,8 @@ struct ExpenseProposal {
     mapping(MemberCategory => uint256) public annualFees;
     mapping(uint256 => mapping(address => uint256)) public membershipPaid;
     uint256 public totalSponsorshipIncome;
+    uint256 public totalMembershipIncome;
+    uint256 public currentFinancialYear;
     uint256 public proposalCount;
 uint256 public totalExpenses;
 mapping(uint256 => ExpenseProposal) public proposals;
@@ -40,6 +42,7 @@ mapping(uint256 => mapping(address => bool)) public hasApproved;
         error InputterOnly();
         error MemberNotRegistered();
         error InvalidAmount();
+        error InvalidFinancialYear();
         error ApproverOnly();
 error InvalidRecipient();
 error InvalidProposal();
@@ -65,6 +68,7 @@ event SponsorshipReceived(
     address indexed sponsor,
     uint256 amount
 );
+event FinancialYearUpdated(uint256 financialYear);
 event ProposalCreated(
     uint256 indexed proposalId,
     address indexed recipient,
@@ -147,7 +151,51 @@ function recordMembershipPayment(
         amountCents,
         msg.sender
     );
-}function createExpenseProposal(
+}
+function payMembership(
+    uint256 financialYear
+) external payable {
+    if (!members[msg.sender].registered) {
+        revert MemberNotRegistered();
+    }
+    if (msg.value == 0) revert InvalidAmount();
+
+    membershipPaid[financialYear][msg.sender] += msg.value;
+    totalMembershipIncome += msg.value;
+
+    emit MembershipPaymentRecorded(
+        msg.sender,
+        financialYear,
+        msg.value,
+        msg.sender
+    );
+}
+function myMembershipStatus(
+    uint256 financialYear
+)
+    external
+    view
+    returns (
+        uint256 annualFee,
+        uint256 paid,
+        uint256 outstanding,
+        uint256 credit
+    )
+{
+    Member storage member = members[msg.sender];
+
+    if (!member.registered) revert MemberNotRegistered();
+
+    annualFee = annualFees[member.category];
+    paid = membershipPaid[financialYear][msg.sender];
+
+    if (paid >= annualFee) {
+        credit = paid - annualFee;
+    } else {
+        outstanding = annualFee - paid;
+    }
+}
+function createExpenseProposal(
     address payable recipient,
     uint256 amount,
     string calldata purpose
@@ -228,7 +276,33 @@ function executeProposal(
         proposal.recipient,
         proposal.amount
     );
-}function sponsor() external payable {
+}
+function setFinancialYear(
+    uint256 financialYear
+) external onlyAdministrator {
+    if (financialYear == 0) revert InvalidFinancialYear();
+
+    currentFinancialYear = financialYear;
+
+    emit FinancialYearUpdated(financialYear);
+}
+function treasurySummary()
+    external
+    view
+    returns (
+        uint256 membershipIncome,
+        uint256 sponsorshipIncome,
+        uint256 expenses,
+        uint256 availableBalance
+    )
+{
+    membershipIncome = totalMembershipIncome;
+    sponsorshipIncome = totalSponsorshipIncome;
+    expenses = totalExpenses;
+    availableBalance = address(this).balance;
+}
+
+function sponsor() external payable {
     if (msg.value == 0) revert InvalidAmount();
 
     totalSponsorshipIncome += msg.value;

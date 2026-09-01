@@ -228,6 +228,10 @@ fund.executeProposal(proposalId);
     assertEq(address(fund).balance, 1 ether);
     assertTrue(fund.hasApproved(proposalId, approverOne));
     assertTrue(fund.hasApproved(proposalId, approverTwo));
+vm.expectRevert(
+    UbuntuFund.ProposalAlreadyExecuted.selector
+);
+fund.executeProposal(proposalId);
 }
 function test_InputterCannotApproveOwnProposal() public {
     address inputter = address(0xA11CE);
@@ -249,5 +253,75 @@ function test_InputterCannotApproveOwnProposal() public {
     );
 
     fund.approveProposal(proposalId);
+}
+function test_MemberPaymentAndBalanceStatus() public {
+    address member = address(0x1234);
+
+    fund.registerMember(
+        member,
+        UbuntuFund.MemberCategory.StudentActive
+    );
+    vm.deal(member, 100_000);
+
+    vm.prank(member);
+    fund.payMembership{value: 15_000}(2026);
+
+    vm.prank(member);
+    (
+        uint256 annualFee,
+        uint256 paid,
+        uint256 outstanding,
+        uint256 credit
+    ) = fund.myMembershipStatus(2026);
+
+    assertEq(annualFee, 30_000);
+    assertEq(paid, 15_000);
+    assertEq(outstanding, 15_000);
+    assertEq(credit, 0);
+
+    vm.prank(member);
+    fund.payMembership{value: 20_000}(2026);
+
+    vm.prank(member);
+    (
+        annualFee,
+        paid,
+        outstanding,
+        credit
+    ) = fund.myMembershipStatus(2026);
+
+    assertEq(annualFee, 30_000);
+    assertEq(paid, 35_000);
+    assertEq(outstanding, 0);
+    assertEq(credit, 5_000);
+    assertEq(fund.totalMembershipIncome(), 35_000);
+    assertEq(address(fund).balance, 35_000);
+}
+function test_AdministratorSetsFinancialYear() public {
+    fund.setFinancialYear(2026);
+
+    assertEq(fund.currentFinancialYear(), 2026);
+
+    address outsider = address(0xCAFE);
+    vm.prank(outsider);
+    vm.expectRevert(UbuntuFund.AdministratorOnly.selector);
+
+    fund.setFinancialYear(2027);
+}
+function test_TreasurySummaryIsPublic() public {
+    vm.deal(address(this), 2 ether);
+    fund.sponsor{value: 2 ether}();
+
+    (
+        uint256 membershipIncome,
+        uint256 sponsorshipIncome,
+        uint256 expenses,
+        uint256 availableBalance
+    ) = fund.treasurySummary();
+
+    assertEq(membershipIncome, 0);
+    assertEq(sponsorshipIncome, 2 ether);
+    assertEq(expenses, 0);
+    assertEq(availableBalance, 2 ether);
 }
 }
