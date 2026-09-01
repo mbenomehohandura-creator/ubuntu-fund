@@ -168,4 +168,19 @@ function test_InputterCannotRecordZeroPayment() public {
 
     fund.recordMembershipPayment(member, 2026, 0);
 }
+function test_SponsorCanContributeToTreasury() public {
+    address sponsorAddress = address(0xCAFE);
+
+    vm.deal(sponsorAddress, 2 ether);
+    vm.prank(sponsorAddress);
+    fund.sponsor{value: 1 ether}();
+
+    assertEq(fund.totalSponsorshipIncome(), 1 ether);
+    assertEq(address(fund).balance, 1 ether);
+}
+function test_SponsorCannotContributeZero() public {
+    vm.expectRevert(UbuntuFund.InvalidAmount.selector);
+
+    fund.sponsor();
+}
 }

@@ -23,6 +23,7 @@ struct Member {
     mapping(address => Member) public members;
     mapping(MemberCategory => uint256) public annualFees;
     mapping(uint256 => mapping(address => uint256)) public membershipPaid;
+    uint256 public totalSponsorshipIncome;
         error AdministratorOnly();
         error InputterOnly();
         error MemberNotRegistered();
@@ -38,6 +39,10 @@ struct Member {
     uint256 indexed financialYear,
     uint256 amountCents,
     address indexed inputter
+);
+event SponsorshipReceived(
+    address indexed sponsor,
+    uint256 amount
 );
 
     modifier onlyAdministrator() {
@@ -99,5 +104,12 @@ function recordMembershipPayment(
         amountCents,
         msg.sender
     );
+}
+function sponsor() external payable {
+    if (msg.value == 0) revert InvalidAmount();
+
+    totalSponsorshipIncome += msg.value;
+
+    emit SponsorshipReceived(msg.sender, msg.value);
 }
 }
