@@ -183,4 +183,71 @@ function test_SponsorCannotContributeZero() public {
 
     fund.sponsor();
 }
+function test_CompleteExpenseWorkflow() public {
+    address inputter = address(0xA11CE);
+    address approverOne = address(0xB0B);
+    address approverTwo = address(0xCAFE);
+    address payable recipient = payable(address(0xD00D));
+
+    fund.setInputter(inputter, true);
+    fund.setApprover(approverOne, true);
+    fund.setApprover(approverTwo, true);
+
+    vm.deal(address(this), 2 ether);
+    fund.sponsor{value: 2 ether}();
+
+    vm.prank(inputter);
+    uint256 proposalId = fund.createExpenseProposal(
+        recipient,
+        1 ether,
+        "Purchase hockey equipment"
+    );
+
+    vm.prank(approverOne);
+    fund.approveProposal(proposalId);
+vm.prank(approverOne);
+vm.expectRevert(UbuntuFund.AlreadyApproved.selector);
+fund.approveProposal(proposalId);
+
+vm.expectRevert(
+    UbuntuFund.InsufficientApprovals.selector
+);
+fund.executeProposal(proposalId);
+    vm.prank(approverTwo);
+    fund.approveProposal(proposalId);
+
+    uint256 recipientBalanceBefore = recipient.balance;
+
+    fund.executeProposal(proposalId);
+
+    assertEq(
+        recipient.balance,
+        recipientBalanceBefore + 1 ether
+    );
+    assertEq(fund.totalExpenses(), 1 ether);
+    assertEq(address(fund).balance, 1 ether);
+    assertTrue(fund.hasApproved(proposalId, approverOne));
+    assertTrue(fund.hasApproved(proposalId, approverTwo));
+}
+function test_InputterCannotApproveOwnProposal() public {
+    address inputter = address(0xA11CE);
+    address payable recipient = payable(address(0xD00D));
+
+    fund.setInputter(inputter, true);
+    fund.setApprover(inputter, true);
+
+    vm.prank(inputter);
+    uint256 proposalId = fund.createExpenseProposal(
+        recipient,
+        1 ether,
+        "Purchase hockey equipment"
+    );
+
+    vm.prank(inputter);
+    vm.expectRevert(
+        UbuntuFund.InputterCannotApprove.selector
+    );
+
+    fund.approveProposal(proposalId);
+}
 }
