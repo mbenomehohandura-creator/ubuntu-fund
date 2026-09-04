@@ -7,6 +7,7 @@ Ubuntu Fund is a transparent Web3 treasury and membership-fee proof of concept f
 - Network: Ethereum Sepolia
 - Contract address: `0x6FF4dc5f51A2F16c21B53844a1111eF69E4D316b`
 - Explorer: https://sepolia.etherscan.io/address/0x6FF4dc5f51A2F16c21B53844a1111eF69E4D316b
+- Live frontend: https://chipper-muffin-d7e34a.netlify.app
 
 ## Features
 
